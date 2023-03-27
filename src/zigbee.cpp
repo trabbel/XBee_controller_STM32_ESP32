@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstring>
 #include "zigbee.h"
+#include "utils.h"
 
 #define START_DELIMITER 0x7E
 #define ESCAPE_CHAR     0x7D
@@ -124,37 +125,32 @@ int escapePayload(char *payload, char *tx_buf, int payloadSize){
  * @returns A parsedFrame struct, including the frame type and payload length
  */
 parsedFrame readFrame(char *frame, HardwareSerial &serial){
-    int x = 0;
     parsedFrame result = {0x00, 0};
     unsigned char lengthBytes[2];
     
     // Read the length bytes. Return an error if no data is available or
     // another frame delimiter is encountered
     for (int i = 0; i < 2; i++) {
-        /*if (!serial.available()>0) {
-            result.length = 0;
-            Serial.printf("1\n");
+
+        if(waitForByte(serial)==0){
             return result;
-        }*/
-        while(!serial.available()>0){
-            delayMicroseconds(5);
         }
+
         lengthBytes[i] = serial.read();
-        //serial.read(&lengthBytes[i]);
+
         if (lengthBytes[i] == START_DELIMITER) {
             result.length = -1;
             return result;
         }else if(lengthBytes[i] == ESCAPE_CHAR){
             // If an escape char is encountered, read the next byte instead and unescape it
-            delay(x);
-            //serial.read(&lengthBytes[i], 1);
-            while(!serial.available()>0){
-                delayMicroseconds(5);
+
+            if(waitForByte(serial)==0){
+                return result;
             }
+
             lengthBytes[i] = serial.read();
             lengthBytes[i] = lengthBytes[i] ^ 0x20;
         }
-        delay(x);
     }
 
     // The length defined by the length bytes is not equal to the actual amount
@@ -166,30 +162,25 @@ parsedFrame readFrame(char *frame, HardwareSerial &serial){
     // Read the payload. Return an error if no data is available or
     // another frame delimiter is encountered
     for (int i = 0; i < payloadSize + 1; i++) {
-        /*if (!serial.available()>0) {
-            result.length = 0;
-            Serial.printf("2\n");
+
+        if(waitForByte(serial)==0){
             return result;
-        }*/
-        //serial.read(&frame[i], 1);
-        while(!serial.available()>0){
-            delayMicroseconds(5);
         }
+
         frame[i] = serial.read();
         if (frame[i] == START_DELIMITER) {
             result.length = -1;
             return result;
         }else if(frame[i] == ESCAPE_CHAR){
             // If an escape char is encountered, read the next byte instead and unescape it
-            delay(x);
-            //serial.read(&frame[i], 1);
-            while(!serial.available()>0){
-                delayMicroseconds(5);
+
+            if(waitForByte(serial)==0){
+                return result;
             }
+            
             frame[i] = serial.read();
             frame[i] = frame[i] ^ 0x20;
         }
-        delay(x);
     }
 
     // Calculate the checksum, ignoring length bytes and escape characters
