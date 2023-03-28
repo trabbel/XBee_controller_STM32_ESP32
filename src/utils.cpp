@@ -20,7 +20,7 @@ int waitForByte(HardwareSerial &serial, int timeoutCnt /*= 1000*/){
         if(timeout>timeoutCnt){
             return 0;
         }
-        delayMicroseconds(5);
+        delayMicroseconds(8);
     }
     return 1;
 }
