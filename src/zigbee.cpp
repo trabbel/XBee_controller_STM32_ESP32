@@ -17,6 +17,7 @@
  * a xBee device. 
  *
  * @param frame Pointer to char array, buffer where the frame is written
+ * @param frame_id If frame id is 0x00, no acknowledgement is requested
  * @param addr16 16 bit local network address
  * @param addr64 64 bit MAC address
  * @param payload Pointer to the hex array to send as data
@@ -24,7 +25,7 @@
  *
  * @returns Length of the constructed frame
  */
-int writeFrame(char *frame, int addr16, uint64_t addr64, char *payload, int payloadSize){
+int writeFrame(char *frame, char frame_id, int addr16, uint64_t addr64, char *payload, int payloadSize){
     // Define a temporary array of sufficient size for everything that may be escaped
     char tempFrame[(16+payloadSize)];
     // Frame delimiter
@@ -36,7 +37,7 @@ int writeFrame(char *frame, int addr16, uint64_t addr64, char *payload, int payl
     // API ID (TX request)
     tempFrame[2] = 0x10;
     // Frame ID
-    tempFrame[3] = 0x01;
+    tempFrame[3] = frame_id;//0x01;
     // 64-bit destination address
     for(int i = 0; i<8; i++){
         tempFrame[4+i] = (addr64 >> (7-i)*8) & 0xFF;

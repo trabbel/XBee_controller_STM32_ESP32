@@ -41,7 +41,7 @@ uint16_t userChannelsMask[6]={ 0x00FF,0x0000,0x0000,0x0000,0x0000,0x0000 };
 DeviceClass_t  loraWanClass = CLASS_A;
 
 /*the application data transmission duty cycle.  value in [ms].*/
-uint32_t appTxDutyCycle = 15000;
+uint32_t appTxDutyCycle = 15000; //1000 * 60 * 10;
 
 /*OTAA or ABP*/
 bool overTheAirActivation = true;
@@ -113,6 +113,7 @@ static void prepareTxFrame( uint8_t port )
 char tx_buf[MAXIMUM_BUFFER_SIZE] = {0};
 char rx_buf[MAXIMUM_BUFFER_SIZE] = {0};
 int tx_length = 0;
+uint64_t sink_addr = 0x0013a20041f223b8;
 
 // Delays for software-"multithreading"/scheduling
 millisDelay sendDelay;
@@ -163,8 +164,6 @@ static void rx_callback(char *buffer){
 
 
 void setup() {
-    char payload[] = "test~}{~testsuefiuwegifuwgefigweiurfz7489374t9394f983b49f8b5fg7893b64f934bz9823zbco8w8zeuboirzubwo84zbv97tz4bvuewzboruivb89346zbviuewzbort8ib34";
-    //char payload[] = "test~}{~test";
     Serial.begin(115200);
     #ifdef TARGET_STM_32
     xbee.begin(115200);
@@ -181,7 +180,6 @@ void setup() {
     #endif
 
 
-    // myled = 0;
     delay(100);
     #ifdef TARGET_STM_32
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
@@ -189,11 +187,8 @@ void setup() {
     digitalWrite(15, HIGH); 
     #endif
     delay(100);
-    tx_length = writeFrame(tx_buf, 0xFFFE, 0x0013a20041f217cc, payload, sizeof(payload)-1);
-
-    sendDelay.start(2000);
+    sendDelay.start(1000);
     Serial.printf("Setup finished\n");
-
 }
 
 
@@ -201,6 +196,8 @@ void sendMessage() {
   if (sendDelay.justFinished()) {
     sendDelay.repeat();
     Serial.printf("Send message\n");
+    char payload[] = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata";
+    tx_length = writeFrame(tx_buf, 0x01, 0xFFFE, sink_addr, payload, sizeof(payload)-1);
     xbee.write(tx_buf, tx_length);
   }
 }
@@ -208,6 +205,10 @@ void sendMessage() {
 
 void loop() {
     sendMessage();
+    /*Serial.printf("Payload length: %i\n", tx_length);
+    for (int i = 0 ; i<tx_length; i++){
+            Serial.printf("%02x", tx_buf[i]);
+        }Serial.printf("\n");*/
     rx_callback(rx_buf);
 
     #ifdef TARGET_ESP_32
